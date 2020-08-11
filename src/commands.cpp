@@ -1,26 +1,27 @@
 #include "commands.h"
 #include "gps.h"
 
+char scratch_pad[161];
+
 typedef bool (*sms_handler_t)(gsm_t *, const char*);
 extern gps_t gps;
 
 bool send_position(gsm_t *gsm, const char *phone_no)
 {
-  char message[161];
-  message[0] = '\0';
+  scratch_pad[0] = '\0';
   gps_position_t position;
   bool is_valid = gps_get_position(&gps, &position);
   if (is_valid)
   {
-    sprintf(message, "maps.google.com/?q=%.6f+%.6f\nHDOP: %.2f\nAge: %d\n", position.latitude, position.longitude, double(position.hdop)/ 100.0f, (millis() - position.timestamp)/1000);
+    sprintf(scratch_pad, "maps.google.com/?q=%.6f+%.6f\nHDOP: %.2f\nAge: %d\n", position.latitude, position.longitude, double(position.hdop)/ 100.0f, (millis() - position.timestamp)/1000);
   }
   else
   {
-    strcat(message, "No GPS fix\n");
+    strcat(scratch_pad, "No GPS fix\n");
   }
-  sprintf(message + strlen(message), "Bat: %d%% (%.2fV)\n", gsm->battery_percentage, gsm->battery_voltage);
+  sprintf(scratch_pad + strlen(scratch_pad), "Bat: %d%% (%.2fV)\n", gsm->battery_percentage, gsm->battery_voltage);
 
-  return gsm_send_sms(gsm, phone_no, message);
+  return gsm_send_sms(gsm, phone_no, scratch_pad);
 }
 
 bool commands_handle_position(gsm_t *gsm, const char* phone_no)
@@ -30,19 +31,18 @@ bool commands_handle_position(gsm_t *gsm, const char* phone_no)
 
 bool commands_handle_list(gsm_t *gsm, const char* phone_no)
 {
-  char message[161];
-  message[0] = '\0';
+  scratch_pad[0] = '\0';
 
   for (uint8_t i = 0; i < GPS_NUM_HIGHSCORE; i++)
   {
     gps_position_t pos;
     if(gps_get_high_score(&gps, i, &pos))
     {
-      sprintf(message + strlen(message), "%.6f,%.6f,%.2f,%d\n", pos.latitude, pos.longitude, double(pos.hdop) / 100.0f, (millis() - pos.timestamp) / 1000);
+      sprintf(scratch_pad + strlen(scratch_pad), "%.6f,%.6f,%.2f,%d\n", pos.latitude, pos.longitude, double(pos.hdop) / 100.0f, (millis() - pos.timestamp) / 1000);
     }
   }
 
-  return gsm_send_sms(gsm, phone_no, message);
+  return gsm_send_sms(gsm, phone_no, scratch_pad);
 }
 
 char subscriber[30] = {0};

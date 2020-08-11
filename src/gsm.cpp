@@ -260,10 +260,13 @@ bool gsm_first_setup(gsm_t *gsm)
   }
   gsm_flush(gsm);
 
-  if(!gsm_command(gsm, "ATE0"))
+  if(!gsm->debug)
   {
-    Serial.println("Could not disable echo");
-    return false;
+    if(!gsm_command(gsm, "ATE0"))
+    {
+      Serial.println("Could not disable echo");
+      return false;
+    }
   }
 
   if (!gsm_command(gsm, "AT+CFUN=1"))

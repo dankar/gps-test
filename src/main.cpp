@@ -30,12 +30,14 @@ void setup() {
   
   gps_init(&gps, &gps_uart);
 
-  if(!gsm_init(&gsm, &gsm_uart, commands_handle_sms_command, send_position, true, true, false))
+  if(!gsm_init(&gsm, &gsm_uart, commands_handle_sms_command, send_position, true, false, false))
   {
     Serial.println("GSM failed");
     for(;;);
   }
 }
+
+extern char scratch_pad[161];
 
 void loop() {
   gps_run(&gps, S(5));
@@ -44,24 +46,25 @@ void loop() {
 
   gps_get_position(&gps, &pos);
 
+  Serial.println("GPS pos:");
   Serial.print("Lat: ");
   Serial.println(pos.latitude, 6);
   Serial.print("Lng: ");
   Serial.println(pos.longitude, 6);
 
-  char message[161];
-  message[0] = '\0';
+  scratch_pad[0] = '\0';
 
+  Serial.println("GPS list:");
   for (uint8_t i = 0; i < GPS_NUM_HIGHSCORE; i++)
   {
     gps_position_t pos;
     if(gps_get_high_score(&gps, i, &pos))
     {
-      sprintf(message + strlen(message), "%.6f,%.6f,%.2f,%d\n", pos.latitude, pos.longitude, double(pos.hdop) / 100.0f, (millis() - pos.timestamp) / 1000);
+      sprintf(scratch_pad + strlen(scratch_pad), "%.6f,%.6f,%.2f,%d\n", pos.latitude, pos.longitude, double(pos.hdop) / 100.0f, (millis() - pos.timestamp) / 1000);
     }
   }
 
-  Serial.print(message);
+  Serial.print(scratch_pad);
 
   gsm_run(&gsm, S(5));
 
