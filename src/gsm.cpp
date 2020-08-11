@@ -302,10 +302,7 @@ bool gsm_get_battery_status(gsm_t *gsm)
   gsm->battery_voltage = atoi(voltage);
   gsm->battery_voltage /= 1000.0f;
   gsm->battery_percentage = atoi(percentage);
-  Serial.print(gsm->battery_voltage);
-  Serial.println("V");
-  Serial.print(gsm->battery_percentage);
-  Serial.println("%");
+  
   return true;
 }
 

@@ -37,8 +37,6 @@ void setup() {
   }
 }
 
-extern char scratch_pad[161];
-
 void loop() {
   gps_run(&gps, S(5));
 
@@ -46,27 +44,19 @@ void loop() {
 
   gps_get_position(&gps, &pos);
 
-  Serial.println("GPS pos:");
-  Serial.print("Lat: ");
+  Serial.print("GPS:");
   Serial.println(pos.latitude, 6);
-  Serial.print("Lng: ");
+  Serial.print(", ");
   Serial.println(pos.longitude, 6);
 
-  scratch_pad[0] = '\0';
-
-  Serial.println("GPS list:");
-  for (uint8_t i = 0; i < GPS_NUM_HIGHSCORE; i++)
-  {
-    gps_position_t pos;
-    if(gps_get_high_score(&gps, i, &pos))
-    {
-      sprintf(scratch_pad + strlen(scratch_pad), "%.6f,%.6f,%.2f,%d\n", pos.latitude, pos.longitude, double(pos.hdop) / 100.0f, (millis() - pos.timestamp) / 1000);
-    }
-  }
-
-  Serial.print(scratch_pad);
-
   gsm_run(&gsm, S(5));
+
+  Serial.print("Battery: ");
+  Serial.print(gsm.battery_percentage);
+  Serial.print("% (");
+  Serial.print(gsm.battery_voltage);
+  Serial.println("V)");
+  
 
   /*if (timer_elapsed(&gsm_subscriber_timer))
   {
