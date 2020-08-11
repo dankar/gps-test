@@ -98,9 +98,6 @@ bool gsm_wait_for_response(gsm_t *gsm, const char *response, uint32_t to = 1000)
 
     if (timer_elapsed(&timeout))
     {
-      Serial.print("Timeout waiting for '");
-      Serial.print(response);
-      Serial.println("'");
       return false;
     }
   }
@@ -369,7 +366,6 @@ bool gsm_handle_sms(gsm_t *gsm)
 
     if (!gsm_command_and_response(gsm, "AT+CMGL", "+CMGL"))
     {
-        Serial.println("Failed to get new SMS messages");
         return false;
     }
 

@@ -18,7 +18,7 @@ bool send_position(gsm_t *gsm, const char *phone_no)
   {
     strcat(message, "No GPS fix\n");
   }
-  sprintf(message + strlen(message), "Bat: %d%% (%.3fV)\n", gsm->battery_percentage, gsm->battery_voltage);
+  sprintf(message + strlen(message), "Bat: %d%% (%.2fV)\n", gsm->battery_percentage, gsm->battery_voltage);
 
   return gsm_send_sms(gsm, phone_no, message);
 }
@@ -69,8 +69,7 @@ sms_command_t command_list[] = {
 bool commands_handle_sms_command(gsm_t *gsm, const char* phone_no, const char* content)
 {
   uint8_t index = 0;
-  String cmd_text = content;
-  cmd_text.toUpperCase();
+  
   for (;; index++)
   {
     if (command_list[index].command == NULL)
@@ -78,7 +77,7 @@ bool commands_handle_sms_command(gsm_t *gsm, const char* phone_no, const char* c
       return false;
     }
 
-    if (strcmp(cmd_text.c_str(), command_list[index].command) == 0)
+    if (strcmp(content, command_list[index].command) == 0)
     {
       return command_list[index].handler(gsm, phone_no);
     }
