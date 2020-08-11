@@ -30,7 +30,7 @@ void setup() {
   
   gps_init(&gps, &gps_uart);
 
-  if(!gsm_init(&gsm, &gsm_uart, commands_handle_sms_command, send_position))
+  if(!gsm_init(&gsm, &gsm_uart, commands_handle_sms_command, send_position, true, true, false))
   {
     Serial.println("GSM failed");
     for(;;);
@@ -38,21 +38,6 @@ void setup() {
 }
 
 void loop() {
-  
-  /*if (gsm->incoming_call)
-  {
-    char caller_id[20];
-    if (gsm_handle_call_id(gsm, caller_id))
-    {
-      send_position(gsm, caller_id);
-    }
-    else
-    {
-      Serial.println("Timeout");
-    }
-    gsm_hangup(gsm);
-  }*/
-
   gps_run(&gps, S(5));
 
   gps_position_t pos;
@@ -64,14 +49,15 @@ void loop() {
   Serial.print("Lng: ");
   Serial.println(pos.longitude, 6);
 
-  String message;
+  char message[161];
+  message[0] = '\0';
 
-  for (uint8_t i = 0; i < 5; i++)
+  for (uint8_t i = 0; i < GPS_NUM_HIGHSCORE; i++)
   {
     gps_position_t pos;
     if(gps_get_high_score(&gps, i, &pos))
     {
-      message += String(pos.latitude, 6) + "," + String(pos.longitude, 6) + "," + String(float(pos.hdop) / 100.0f, 2) + "," + String((millis() - pos.timestamp) / 1000) + "\n";
+      sprintf(message + strlen(message), "%.6f,%.6f,%.2f,%d\n", pos.latitude, pos.longitude, double(pos.hdop) / 100.0f, (millis() - pos.timestamp) / 1000);
     }
   }
 
@@ -92,12 +78,4 @@ void loop() {
       Serial.println("No subscriber");
     }
   }*/
-
-  /*
-      while (gsm->serial->available()) {
-        Serial.write(gsm->serial->read());
-    }
-    while (Serial.available()) {
-        gsm->serial->write(Serial.read());
-    }*/
 }

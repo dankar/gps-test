@@ -10,6 +10,34 @@ struct data_type_t
   char stop_char;
 };
 
+inline char gsm_get_char(gsm_t *gsm)
+{
+  char in = gsm->serial->read();
+  if(gsm->monitor)
+  {
+    Serial.write(in);
+  }
+  return in;
+}
+
+inline void gsm_print(gsm_t *gsm, const char* out)
+{
+  if(gsm->monitor)
+  {
+    Serial.print(out);
+  }
+  gsm->serial->print(out);
+}
+
+inline void gsm_println(gsm_t *gsm, const char* out)
+{
+  if(gsm->monitor)
+  {
+    Serial.println(out);
+  }
+  gsm->serial->println(out);
+}
+
 bool gsm_check_for_call(gsm_t *gsm)
 {
   gsm->incoming_call = !digitalRead(GSM_RING);
@@ -20,7 +48,10 @@ bool gsm_check_for_call(gsm_t *gsm)
 void gsm_flush(gsm_t *gsm)
 {
   delay(500);
-  while (gsm->serial->available()) gsm->serial->read();
+  while (gsm->serial->available()) 
+  {
+    gsm_get_char(gsm);
+  }
 }
 
 bool gsm_wait_for_char(gsm_t *gsm, char in, uint32_t to = 1000)
@@ -29,7 +60,7 @@ bool gsm_wait_for_char(gsm_t *gsm, char in, uint32_t to = 1000)
   timer_init(&timeout, to);
   for (;;)
   {
-    if (gsm->serial->available() && gsm->serial->read() == in)
+    if (gsm->serial->available() && gsm_get_char(gsm) == in)
     {
       return true;
     }
@@ -50,7 +81,7 @@ bool gsm_wait_for_response(gsm_t *gsm, const char *response, uint32_t to = 1000)
   {
     if (gsm->serial->available())
     {
-      if (gsm->serial->read() == response[match_position])
+      if (gsm_get_char(gsm) == response[match_position])
       {
         match_position++;
       }
@@ -77,14 +108,14 @@ bool gsm_wait_for_response(gsm_t *gsm, const char *response, uint32_t to = 1000)
 
 bool gsm_command_and_response(gsm_t *gsm, const char *command, const char *response, uint32_t timeout = 1000)
 {
-  gsm->serial->println(command);
+  gsm_println(gsm, command);
 
   return gsm_wait_for_response(gsm, response, timeout);
 }
 
 bool gsm_command(gsm_t *gsm, const char *command, char wait_char = 'K', uint32_t to = 1000)
 {
-  gsm->serial->println(command);
+  gsm_println(gsm, command);
   if (!gsm_wait_for_char(gsm, wait_char, to))
   {
     return false;
@@ -110,7 +141,7 @@ bool gsm_skip_commas(gsm_t *gsm, uint8_t commas, uint32_t to = 1000)
   {
     if (gsm->serial->available())
     {
-      char in = gsm->serial->read();
+      char in = gsm_get_char(gsm);
       if (in == ',')
       {
         if (--commas == 0)
@@ -139,7 +170,7 @@ bool gsm_read_string(gsm_t *gsm, char *out, uint8_t max_chars, char start_char, 
     {
       if (gsm->serial->available())
       {
-        if (gsm->serial->read() == start_char)
+        if (gsm_get_char(gsm) == start_char)
         {
           break;
         }
@@ -156,7 +187,7 @@ bool gsm_read_string(gsm_t *gsm, char *out, uint8_t max_chars, char start_char, 
   {
     if (gsm->serial->available())
     {
-      char in = gsm->serial->read();
+      char in = gsm_get_char(gsm);
       if (in == end_char)
       {
         out[char_index] = '\0';
@@ -225,16 +256,26 @@ bool gsm_command_and_retrieve_data(gsm_t *gsm, const char* command, const char *
 
 bool gsm_first_setup(gsm_t *gsm)
 {
-    if (!gsm_command(gsm, "AT"))
-{Serial.println("Could not detect GSM");
+  if (!gsm_command(gsm, "AT"))
+  {
+        Serial.println("Could not detect GSM");
         return false;
   }
   gsm_flush(gsm);
+
+  if(!gsm_command(gsm, "ATE0"))
+  {
+    Serial.println("Could not disable echo");
+    return false;
+  }
+
   if (!gsm_command(gsm, "AT+CFUN=1"))
   {
     Serial.println("Could not set func");
     return false;
   }
+
+  delay(5000);
 
   if(!gsm_command(gsm, "AT+CMGD=1,4", 'K', 10000))
   {
@@ -283,24 +324,25 @@ bool gsm_send_sms(gsm_t *gsm, const char *phone_no, const char *message)
 
   gsm_flush(gsm);
 
-//#if SEND_SMS == 1
-  gsm->serial->print("AT+CMGS=\"");
-  gsm->serial->print(phone_no);
-  gsm->serial->println("\"");
-  if (!gsm_wait_for_char(gsm, '>', 3000))
+  if(!gsm->disable_sms)
   {
-    Serial.println("Could not send message");
-    return false;
+    gsm_print(gsm, "AT+CMGS=\"");
+    gsm_print(gsm, phone_no);
+    gsm_println(gsm, "\"");
+    if (!gsm_wait_for_char(gsm, '>', 3000))
+    {
+      Serial.println("Could not send message");
+      return false;
+    }
+
+    gsm_println(gsm, message);
+
+    gsm->serial->print('\x1A');
+
+    gsm_flush(gsm);
+    delay(500);
+    gsm_flush(gsm);
   }
-
-  gsm->serial->println(message);
-
-  gsm->serial->print('\x1A');
-
-  gsm_flush(gsm);
-  delay(500);
-  gsm_flush(gsm);
-//#endif
   return true;
 }
 
@@ -372,7 +414,7 @@ void gsm_reset()
   digitalWrite(GSM_ENABLE, HIGH);
 }
 
-bool gsm_init(gsm_t *gsm, SoftwareSerial *serial, sms_callback_t sms_callback, call_callback_t call_callback)
+bool gsm_init(gsm_t *gsm, SoftwareSerial *serial, sms_callback_t sms_callback, call_callback_t call_callback, bool disable_sms, bool monitor, bool debug)
 {
     uint8_t init_attempts = 0;
 
@@ -380,6 +422,9 @@ bool gsm_init(gsm_t *gsm, SoftwareSerial *serial, sms_callback_t sms_callback, c
     gsm->serial = serial;
     gsm->sms_callback = sms_callback;
     gsm->call_callback = call_callback;
+    gsm->disable_sms = disable_sms;
+    gsm->monitor = monitor;
+    gsm->debug = debug;
     timer_init(&gsm->battery_timer, 5000);
     timer_init(&gsm->sms_timer, 5000);
 
@@ -418,35 +463,46 @@ bool gsm_run(gsm_t *gsm, uint32_t time)
 
   while(!timer_elapsed(&timeout))
   {
-#if DEBUG == 0
-    if(gsm_check_for_call(gsm))
+    if(gsm->debug)
     {
-      char caller_id[30];
-      bool success = false;
-      if(gsm_handle_call_id(gsm, caller_id))
-      {
-        success = true;
+      while (gsm->serial->available()) {
+        Serial.write(gsm->serial->read());
       }
-
-      gsm_hangup(gsm);
-
-      if(success)
-      {
-        gsm->call_callback(gsm, caller_id);
+      while (Serial.available()) {
+        gsm->serial->write(Serial.read());
       }
     }
-    
-    if (timer_elapsed(&gsm->battery_timer))
+    else
     {
-        gsm_get_battery_status(gsm);
-    }
+      if(gsm_check_for_call(gsm))
+      {
+        char caller_id[30];
+        bool success = false;
+        if(gsm_handle_call_id(gsm, caller_id))
+        {
+          success = true;
+        }
 
-    if (timer_elapsed(&gsm->sms_timer))
-    {
-        gsm_handle_sms(gsm);
-    }
-#endif
-    gsm_flush(gsm);
+        gsm_hangup(gsm);
+
+        if(success)
+        {
+          gsm->call_callback(gsm, caller_id);
+        }
+      }
+      
+      if (timer_elapsed(&gsm->battery_timer))
+      {
+          gsm_get_battery_status(gsm);
+      }
+
+      if (timer_elapsed(&gsm->sms_timer))
+      {
+          gsm_handle_sms(gsm);
+      }
+
+      gsm_flush(gsm);
+    } 
   }
   return true;
 }

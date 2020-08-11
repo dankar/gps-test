@@ -6,22 +6,21 @@ extern gps_t gps;
 
 bool send_position(gsm_t *gsm, const char *phone_no)
 {
-  String message = "";
+  char message[161];
+  message[0] = '\0';
   gps_position_t position;
   bool is_valid = gps_get_position(&gps, &position);
   if (is_valid)
   {
-    message += "maps.google.com/?q=" + String(position.latitude, 6) + "+" + String(position.latitude, 6) + "\n";
-    message += "HDOP: " + String((float(position.hdop) / 100.0f)) + "\n";
-    message += "Age: " + String((millis() - position.timestamp) / 1000) + "s\n";
+    sprintf(message, "maps.google.com/?q=%.6f+%.6f\nHDOP: %.2f\nAge: %d\n", position.latitude, position.longitude, double(position.hdop)/ 100.0f, (millis() - position.timestamp)/1000);
   }
   else
   {
-    message += "No GPS fix\n";
+    strcat(message, "No GPS fix\n");
   }
-  message += "Bat: " + String(gsm->battery_percentage) + "% (" + String(gsm->battery_voltage) + "V)\n";
+  sprintf(message + strlen(message), "Bat: %d%% (%.3fV)\n", gsm->battery_percentage, gsm->battery_voltage);
 
-  return gsm_send_sms(gsm, phone_no, message.c_str());
+  return gsm_send_sms(gsm, phone_no, message);
 }
 
 bool commands_handle_position(gsm_t *gsm, const char* phone_no)
@@ -31,18 +30,19 @@ bool commands_handle_position(gsm_t *gsm, const char* phone_no)
 
 bool commands_handle_list(gsm_t *gsm, const char* phone_no)
 {
-  String message;
+  char message[161];
+  message[0] = '\0';
 
-  for (uint8_t i = 0; i < 5; i++)
+  for (uint8_t i = 0; i < GPS_NUM_HIGHSCORE; i++)
   {
     gps_position_t pos;
     if(gps_get_high_score(&gps, i, &pos))
     {
-      message += String(pos.latitude, 6) + "," + String(pos.longitude, 6) + "," + String(float(pos.hdop) / 100.0f, 2) + "," + String((millis() - pos.timestamp) / 1000) + "\n";
+      sprintf(message + strlen(message), "%.6f,%.6f,%.2f,%d\n", pos.latitude, pos.longitude, double(pos.hdop) / 100.0f, (millis() - pos.timestamp) / 1000);
     }
   }
 
-  return gsm_send_sms(gsm, phone_no, message.c_str());
+  return gsm_send_sms(gsm, phone_no, message);
 }
 
 char subscriber[30] = {0};

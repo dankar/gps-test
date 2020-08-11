@@ -12,7 +12,7 @@ typedef bool (*call_callback_t)(gsm_t*, const char*);
 
 struct gsm_t
 {
-    float battery_voltage;
+    double battery_voltage;
     uint8_t battery_percentage;
     SoftwareSerial *serial;
     bool incoming_call;
@@ -21,9 +21,13 @@ struct gsm_t
 
     timer_t battery_timer;
     timer_t sms_timer;
+
+    bool disable_sms;
+    bool monitor;
+    bool debug;
 };
 
-bool gsm_init(gsm_t *gsm, SoftwareSerial *serial, sms_callback_t sms_callback, call_callback_t call_callback);
+bool gsm_init(gsm_t *gsm, SoftwareSerial *serial, sms_callback_t sms_callback, call_callback_t call_callback, bool disable_sms, bool monitor, bool debug);
 
 
 void gsm_hangup(gsm_t *gsm);
