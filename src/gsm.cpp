@@ -445,9 +445,15 @@ bool gsm_init(gsm_t *gsm, SoftwareSerial *serial, sms_callback_t sms_callback, c
     }
 
     if(!init_attempts)
+    {
+        Serial.println("GSM module initialized");
+      
         return true;
+    }
     else
+    {
         return false;
+    }
 }
 
 bool gsm_run(gsm_t *gsm, uint32_t time)

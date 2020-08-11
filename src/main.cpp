@@ -26,7 +26,7 @@ void setup() {
   // put your setup code here, to run once:
   
   Serial.begin(115200);
-  Serial.println("REBOOT!!!");
+  Serial.println("Booting...");
   
   gps_init(&gps, &gps_uart);
 
@@ -38,14 +38,18 @@ void setup() {
 }
 
 void loop() {
+  if(gsm.debug)
+  {
+    gsm_run(&gsm, S(5));
+    return;
+  }
+
   gps_run(&gps, S(5));
 
   gps_position_t pos;
-
   gps_get_position(&gps, &pos);
-
-  Serial.print("GPS:");
-  Serial.println(pos.latitude, 6);
+  Serial.print("GPS: ");
+  Serial.print(pos.latitude, 6);
   Serial.print(", ");
   Serial.println(pos.longitude, 6);
 
