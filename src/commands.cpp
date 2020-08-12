@@ -13,7 +13,7 @@ bool send_position(gsm_t *gsm, const char *phone_no)
   bool is_valid = gps_get_position(&gps, &position);
   if (is_valid)
   {
-    sprintf(scratch_pad, "maps.google.com/?q=%.6f+%.6f\nHDOP: %.2f\nAge: %d\n", position.latitude, position.longitude, double(position.hdop)/ 100.0f, (millis() - position.timestamp)/1000);
+    sprintf(scratch_pad, "maps.google.com/?q=%.6f+%.6f\nHDOP: %.2f\nAge: %d\n", position.latitude, position.longitude, double(position.hdop)/ 100.0f, gps_get_age_in_seconds(&position));
   }
   else
   {
@@ -38,7 +38,7 @@ bool commands_handle_list(gsm_t *gsm, const char* phone_no)
     gps_position_t pos;
     if(gps_get_high_score(&gps, i, &pos))
     {
-      sprintf(scratch_pad + strlen(scratch_pad), "%.6f,%.6f,%.2f,%d\n", pos.latitude, pos.longitude, double(pos.hdop) / 100.0f, (millis() - pos.timestamp) / 1000);
+      sprintf(scratch_pad + strlen(scratch_pad), "%.6f,%.6f,%.2f,%d\n", pos.latitude, pos.longitude, double(pos.hdop) / 100.0f, gps_get_age_in_seconds(&pos));
     }
   }
 

@@ -25,6 +25,8 @@ struct gps_t
 bool gps_init(gps_t *gps, SoftwareSerial *serial);
 void gps_run(gps_t *gps, uint32_t time);
 
+uint16_t gps_get_age_in_seconds(gps_position_t *pos);
+
 bool gps_get_position(gps_t *gps, gps_position_t *out);
 bool gps_get_high_score(gps_t *gps, int index, gps_position_t *out);
 

@@ -13,6 +13,12 @@ bool gps_init(gps_t *gps, SoftwareSerial *serial)
 
     return true;
 }
+
+uint16_t gps_get_age_in_seconds(gps_position_t *pos)
+{
+    return uint16_t((millis()-pos->timestamp)/1000);
+}
+
 void gps_run(gps_t *gps, uint32_t time)
 {
     timer_t timeout;
