@@ -15,64 +15,45 @@
 SoftwareSerial gps_uart(GPS_RX, GPS_TX);
 SoftwareSerial gsm_uart(GSM_RX, GSM_TX);
 
-int incoming_call = 0;
-
 timer_t gsm_subscriber_timer;
 
 gps_t gps;
 gsm_t gsm;
 
-void setup() {
-  // put your setup code here, to run once:
-  
-  Serial.begin(115200);
-  Serial.println("Booting...");
-  
-  gps_init(&gps, &gps_uart);
+void(* resetFunc) (void) = 0;
 
-  if(!gsm_init(&gsm, &gsm_uart, commands_handle_sms_command, send_position, true, false, false))
-  {
-    Serial.println("GSM failed");
-    for(;;);
-  }
+void setup()
+{
+	Serial.begin(115200);
+	Serial.println("Booting...");
+
+	gps_init(&gps, &gps_uart);
+
+	if (!gsm_init(&gsm, &gsm_uart, commands_handle_sms_command, send_position))
+	{
+		resetFunc();
+	}
+
+	timer_init(&gsm_subscriber_timer, MINUTES(10));
 }
 
-void loop() {
-  if(gsm.debug)
-  {
-    gsm_run(&gsm, S(5));
-    return;
-  }
+void loop()
+{
+	if (gsm.debug)
+	{
+		gsm_run(&gsm, SECONDS(5));
+		return;
+	}
 
-  gps_run(&gps, S(5));
+	gps_run(&gps, SECONDS(2));
+	gps_print_position(&gps);
+	gps_print_high_scores(&gps);
 
-  gps_position_t pos;
-  gps_get_position(&gps, &pos);
-  Serial.print("GPS: ");
-  Serial.print(pos.latitude, 6);
-  Serial.print(", ");
-  Serial.println(pos.longitude, 6);
+	gsm_run(&gsm, SECONDS(5));
+	gsm_print_battery_status(&gsm);
 
-  gsm_run(&gsm, S(5));
-
-  Serial.print("Battery: ");
-  Serial.print(gsm.battery_percentage);
-  Serial.print("% (");
-  Serial.print(gsm.battery_voltage);
-  Serial.println("V)");
-  
-
-  /*if (timer_elapsed(&gsm_subscriber_timer))
-  {
-
-    if (strlen(subscriber))
-    {
-      Serial.println("Sending subscription");
-      gsm_send_position(subscriber);
-    }
-    else
-    {
-      Serial.println("No subscriber");
-    }
-  }*/
+	if (timer_elapsed(&gsm_subscriber_timer))
+	{
+		send_subscription(&gsm);
+	}
 }

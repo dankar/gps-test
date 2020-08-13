@@ -5,8 +5,8 @@
 
 struct timer_t
 {
-  uint32_t deadline;
-  uint32_t interval;
+	uint32_t deadline;
+	uint32_t interval;
 };
 
 void timer_reset(timer_t *timer);

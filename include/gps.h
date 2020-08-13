@@ -8,18 +8,18 @@
 
 struct gps_position_t
 {
-  uint32_t timestamp;
-  double latitude;
-  double longitude;
-  uint16_t hdop;
+	uint32_t timestamp;
+	double latitude;
+	double longitude;
+	uint16_t hdop;
 };
 
 struct gps_t
 {
-    gps_position_t current_position;
-    gps_position_t high_score[GPS_NUM_HIGHSCORE];
-    SoftwareSerial *serial;
-    bool has_valid_position;
+	gps_position_t current_position;
+	gps_position_t high_score[GPS_NUM_HIGHSCORE];
+	SoftwareSerial *serial;
+	bool has_valid_position;
 };
 
 bool gps_init(gps_t *gps, SoftwareSerial *serial);
@@ -29,5 +29,8 @@ uint16_t gps_get_age_in_seconds(gps_position_t *pos);
 
 bool gps_get_position(gps_t *gps, gps_position_t *out);
 bool gps_get_high_score(gps_t *gps, int index, gps_position_t *out);
+
+void gps_print_position(gps_t *gps);
+void gps_print_high_scores(gps_t *gps);
 
 #endif

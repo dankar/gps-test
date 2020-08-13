@@ -5,6 +5,7 @@
 #include "gsm.h"
 
 bool send_position(gsm_t *gsm, const char *phone_no);
+bool send_subscription(gsm_t *gsm);
 bool commands_handle_sms_command(gsm_t *gsm, const char* phone_no, const char* content);
 
 #endif
