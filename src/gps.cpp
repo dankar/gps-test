@@ -102,7 +102,11 @@ void gps_run(gps_t *gps, uint32_t time)
 				gps->current_position.longitude = gps_decoder.location.lng();
 				gps->current_position.hdop = gps_decoder.hdop.value();
 				gps->current_position.timestamp = millis() - gps_decoder.location.age();
+				gps->current_position.course = gps_decoder.course.deg();
+				gps->current_position.speed = gps_decoder.speed.mps();
+				gps->current_position.sats = gps_decoder.satellites.value();
 				gps->has_valid_position = true;
+				
 			}
 		}
 	}
@@ -141,6 +145,8 @@ void gps_print_position(gps_t *gps)
 	Serial.print(pos.latitude, 6);
 	Serial.print(", ");
 	Serial.print(pos.longitude, 6);
+	Serial.print(", Sats: ");
+	Serial.print(pos.sats);
 	Serial.print(", HDOP:");
 	Serial.println(float(pos.hdop)/100.0f, 2);
 }

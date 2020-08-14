@@ -12,13 +12,13 @@ bool send_position(gsm_t *gsm, const char *phone_no)
 	bool is_valid = gps_get_position(&gps, &position);
 	if (is_valid)
 	{
-		sprintf(text_scratch_pad, "maps.google.com/?q=%.6f+%.6f\nHDOP: %.2f\nAge: %d\n", position.latitude, position.longitude, double(position.hdop) / 100.0f, gps_get_age_in_seconds(&position));
+		sprintf(text_scratch_pad, "maps.google.com/?q=%.6f+%.6f\nHDOP: %.2f\nSats: %d\nAge: %d\n", position.latitude, position.longitude, double(position.hdop) / 100.0f, position.sats, gps_get_age_in_seconds(&position));
 	}
 	else
 	{
 		strcat(text_scratch_pad, "No GPS fix\n");
 	}
-	sprintf(text_scratch_pad + strlen(text_scratch_pad), "Bat: %d%% (%.2fV)\n", gsm->battery_percentage, gsm->battery_voltage);
+	sprintf(text_scratch_pad + strlen(text_scratch_pad), "Bat: %d%% (%.2fV)", gsm->battery_percentage, gsm->battery_voltage);
 
 	return gsm_send_sms(gsm, phone_no, text_scratch_pad);
 }
@@ -101,19 +101,50 @@ bool commands_handle_unsubscribe(gsm_t *gsm, const char *phone_no)
 	return false;
 }
 
+bool commands_handle_start_live(gsm_t *gsm, const char *phone_no)
+{
+	gsm_enable_data(gsm);
+	return true;
+}
+bool commands_handle_stop_live(gsm_t *gsm, const char *phone_no)
+{
+	gsm_disable_data(gsm);
+	return true;
+}
+
 struct sms_command_t
 {
 	const char *command;
 	sms_handler_t handler;
 };
 
+bool commands_handle_help(gsm_t *gsm, const char *phone_no);
+
 sms_command_t command_list[] = {
 	{"STATUS", commands_handle_position},
 	{"LIST", commands_handle_list},
 	{"SUBSCRIBE", commands_handle_subscribe},
 	{"STOP", commands_handle_unsubscribe},
+	{"START LIVE", commands_handle_start_live },
+	{"STOP LIVE", commands_handle_stop_live },
+	{"HELP", commands_handle_help },
 	{NULL, NULL}
 };
+
+bool commands_handle_help(gsm_t *gsm, const char *phone_no)
+{
+	text_scratch_pad[0] = '\0';
+
+	sms_command_t *cmd_ptr = command_list;
+
+	while((*cmd_ptr).command)
+	{
+		sprintf(text_scratch_pad + strlen(text_scratch_pad), "%s\n", (*cmd_ptr).command);
+		cmd_ptr++;
+	}
+
+	return gsm_send_sms(gsm, phone_no, text_scratch_pad);
+}
 
 void to_upper(char *str)
 {

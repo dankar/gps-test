@@ -20,8 +20,6 @@ timer_t gsm_subscriber_timer;
 gps_t gps;
 gsm_t gsm;
 
-void(* resetFunc) (void) = 0;
-
 void setup()
 {
 	Serial.begin(115200);
@@ -39,11 +37,12 @@ void setup()
 
 void loop()
 {
+	//gsm.enable_data_connection = false;
 	gps_run(&gps, SECONDS(2));
 	gps_print_position(&gps);
 	gps_print_high_scores(&gps);
 
-	gsm_run(&gsm, SECONDS(5));
+	gsm_run(&gsm, &gps, SECONDS(5));
 	gsm_print_battery_status(&gsm);
 
 	if (timer_elapsed(&gsm_subscriber_timer))

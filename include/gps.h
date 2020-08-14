@@ -12,6 +12,9 @@ struct gps_position_t
 	double latitude;
 	double longitude;
 	uint16_t hdop;
+	double course;
+	double speed;
+	uint8_t sats;
 };
 
 struct gps_t
