@@ -39,12 +39,6 @@ void setup()
 
 void loop()
 {
-	if (gsm.debug)
-	{
-		gsm_run(&gsm, SECONDS(5));
-		return;
-	}
-
 	gps_run(&gps, SECONDS(2));
 	gps_print_position(&gps);
 	gps_print_high_scores(&gps);

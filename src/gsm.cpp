@@ -434,7 +434,8 @@ bool gsm_init(gsm_t *gsm, SoftwareSerial *serial, sms_callback_t sms_callback, c
 		DEBUG_PRINT("GSM init attempt ");
 		DEBUG_PRINTLN(init_attempts);
 		gsm_reset();
-		delay(3000);
+		delay(2500);
+		gsm_flush(gsm);
 		if (gsm_first_setup(gsm))
 		{
 			init_attempts = 0;
@@ -465,13 +466,16 @@ bool gsm_run(gsm_t *gsm, uint32_t time)
 	{
 		if (gsm->debug)
 		{
-			while (gsm->serial->available())
+			for(;;)
 			{
-				Serial.write(gsm->serial->read());
-			}
-			while (Serial.available())
-			{
-				gsm->serial->write(Serial.read());
+				while (gsm->serial->available())
+				{
+					Serial.write(gsm->serial->read());
+				}
+				while (Serial.available())
+				{
+					gsm->serial->write(Serial.read());
+				}
 			}
 		}
 		else

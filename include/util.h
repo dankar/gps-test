@@ -10,7 +10,7 @@
 extern char phone_scratch_pad[MAX_PHONE_NO_LENGTH + 1];
 extern char text_scratch_pad[MAX_SMS_LENGTH + 1];
 
-#if 1
+#if 0
 #define DEBUG_PRINTLN(x) Serial.println(x)
 #define DEBUG_PRINT(x) Serial.print(x)
 #else
